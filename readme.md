@@ -82,6 +82,17 @@ Use following link for `canvas-area.js`.
 * `https://gitcdn.xyz/cdn/goessner/canvas-area/master/canvas-area.js`
 
 
+## FAQ
+
+* __How does the `cartesian` property work ?__
+  * I intent to implement its usage in the example above soon.
+
+* __Can you implement feature X and possibly feature Y ?__
+  * `canvas-area` serves my personal needs very well as it is.
+  * So ... no, I won't.
+  * Please go ahead and implement it by yourself.
+  * If you think, your enhancement is of common interest, you are very welcome, to send me a pull request.
+
 ## Changelog
 
 ###  [0.4.0] on January 06, 2018
