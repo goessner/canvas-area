@@ -1,0 +1,78 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset='utf-8'>
+    <title>canvas-area</title>
+    <style>
+        #app {
+            display: grid;
+        }
+        canvas-area {
+            display: block;
+            overflow: hidden;
+            background-color:#eee;
+            border:solid 1px black;            
+        }
+    </style>
+</head>
+
+<body>
+<canvas-area id="ca" width="403" height="303" cartesian="false" resizable="both">
+    <canvas id="c"></canvas>
+</canvas-area>
+<span id="coords">./.</span> | <span id="size">./.</span>
+
+<script src="canvas-area.js"></script>
+<script>
+    const ctx = document.getElementById('c').getContext('2d'),
+          ca = document.getElementById('ca'),
+          coords = document.getElementById('coords'),
+          size = document.getElementById('size');
+
+    function draw(ctx, view) {
+        let w = ctx.canvas.width, h = ctx.canvas.height, 
+        sz = 20*view.scl, xoff = view.x%sz, yoff = view.y%sz;
+
+        ctx.setTransform(1,0,0,1,0.5,0.5);
+        ctx.clearRect(0,0,w,h);
+
+        // draw grid ...
+        if (view.scl > 0.2) {
+            ctx.strokeStyle = "#ccc";
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            for (let x=xoff,nx=w+1; x<nx; x+=sz) { ctx.moveTo(x,0); ctx.lineTo(x,h); }
+            for (let y=yoff,ny=h+1; y<ny; y+=sz) { ctx.moveTo(0,y); ctx.lineTo(w,y); }
+            ctx.stroke();
+        }
+
+        // draw rectangle ...
+        ctx.save();
+        ctx.setTransform(view.scl,0,0,view.scl,view.x+0.5,view.y+0.5);
+        ctx.strokeStyle = "#555";
+        ctx.fillStyle = "#dedede";
+        ctx.fillRect(60,40,80,60);
+        ctx.strokeRect(60,40,80,60);
+        ctx.restore();
+    }
+
+    function render() {
+        draw(ctx, ca.view);
+        requestAnimationFrame(render);
+    }
+
+    window.onload = () => {
+        ca.observe('pointer', e => {
+            let {x,y} = ca.pntToUsr(e), 
+                prec = Math.max(Math.log(ca.view.scl)/Math.log(2), 0);
+            coords.innerHTML = `${(x).toFixed(prec)} / ${(y).toFixed(prec)}`;
+        });
+        ca.observe('resize', e => {
+            size.innerHTML = `size: ${e.width} / ${e.height}`;
+        });
+        ca.resize({width,height}=ca);  // cause single initial notification ..
+        render();
+    }
+</script>
+</body>
+</html>
