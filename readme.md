@@ -84,6 +84,9 @@ Use following link for `canvas-area.js`.
 
 ## Changelog
 
+###  [0.4.0] on January 06, 2018
+* Initial release.
+
 
 ## License
 
