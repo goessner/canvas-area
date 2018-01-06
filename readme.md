@@ -27,6 +27,7 @@ It allows *zoom*, *pan* and *resize* interactions.
 
 ## Example please ...
 
+[try it out ...](https://goessner.github.io/canvas-area/canvas-area)
 
 ## Show me the scripting API ...
 
@@ -77,7 +78,7 @@ It allows *zoom*, *pan* and *resize* interactions.
 
 ## CDN
 
-Use following links for `texmath.js` and `texmath.css`
+Use following link for `canvas-area.js`.
 * `https://gitcdn.xyz/cdn/goessner/canvas-area/master/canvas-area.js`
 
 
