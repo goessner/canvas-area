@@ -1,6 +1,6 @@
 {
   "name": "canvas-area",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "description": "lightweight html container element as a controller parent for one or more canvas elements. It allows zoom, pan and resize interactions",
   "keywords": [
     "HTML",
