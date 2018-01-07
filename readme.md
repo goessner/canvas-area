@@ -84,8 +84,9 @@ Use following link for `canvas-area.js`.
 
 ## FAQ
 
-* __How does the `cartesian` property work ?__
-  * I intent to implement its usage in the example above soon.
+* __Does not work properly with Mobile Device X and Touch Screen Y ?__
+  * Desktop browsers only are addressed at current.
+  * I'm unsure, if and when to add *touch* and *pen* events.
 
 * __Can you implement feature X and possibly feature Y ?__
   * `canvas-area` serves my personal needs very well as it is.
