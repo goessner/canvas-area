@@ -36,7 +36,7 @@ canvasArea.prototype = {
         this.notify('view', this._view);
     },
     // viewport handling ...
-    pan: function({dx,dy}) { this._view.x+=dx; this._view.y+=this.cartesian?dy:dy; this.notify('view', this._view); },
+    pan: function({dx,dy}) { this._view.x+=dx; this._view.y+=dy; this.notify('view', this._view); },
     zoom: function({x,y,scl}) {
         this._view.x = x + scl*(this._view.x - x)
         this._view.y = y + scl*(this._view.y - y)
@@ -72,7 +72,7 @@ canvasArea.prototype = {
         if (e.buttons === 1) {  // left mouse button down ...
             if (this.resizeActive) {  // resize mode active ..
                 this.resize({width: this.width  + (this.cursor[1] === 'w' ? e.dx : 0), 
-                             height: this.height + (this.cursor[0] === 'n' ? e.dy : 0)});
+                             height: this.height + (this.cursor[0] === 'n' ? (this.cartesian ? -e.dy : e.dy) : 0)});
             }
             else if (this.notify('drag',e))  // something dragged .. ?
                 ;
