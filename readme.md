@@ -92,6 +92,7 @@ Use following link for `canvas-area.js`.
   * So ... no, I won't.
   * Please go ahead and implement it by yourself.
   * If you think, your enhancement is of common interest, you are very welcome, to send me a pull request.
+  
 
 ## Changelog
 

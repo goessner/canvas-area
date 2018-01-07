@@ -36,8 +36,6 @@ canvasArea.prototype = {
         this.notify('view', this._view);
     },
     // viewport handling ...
-    pntToUsr: function({x,y}) { let vw = this._view; return {x:(x - vw.x)/vw.scl, y:(y - vw.y)/vw.scl} },
-    vecToUsr: function({x,y}) { let vw = this._view; return {x:(x - vw.x)/vw.scl, y:(y - vw.y)/vw.scl} },
     pan: function({dx,dy}) { this._view.x+=dx; this._view.y+=this.cartesian?-dy:dy; this.notify('view', this._view); },
     zoom: function({x,y,scl}) {
         this._view.x = x + scl*(this._view.x - x)
@@ -45,11 +43,11 @@ canvasArea.prototype = {
         this._view.scl *= scl
         this.notify('view', this._view);
     },
+    pntToUsr: function({x,y}) { let vw = this._view; return {x:(x - vw.x)/vw.scl, y:(y - vw.y)/vw.scl} },
+//    vecToUsr: function({x,y}) { let vw = this._view; return {x:(x - vw.x)/vw.scl, y:(y - vw.y)/vw.scl} },
     resize: function({width,height}) {
         this.width = width;
         this.height = height;
-        this.style.backgroundSize = `initial`;
- //       this.bgimg()
         for (let canvases = this.getElementsByTagName('canvas'), i = 0; i < canvases.length; i++) {  // resize canvas child elements ..
             canvases[i].width = width;
             canvases[i].height = height;
@@ -128,7 +126,7 @@ canvasArea.prototype = {
             x: x,
             y: this.cartesian ? this.height - y : y,
             dx: e.movementX,
-            dy: e.movementY,
+            dy: this.cartesian ? -e.movementY : e.movementY,
             delta: Math.max(-1,Math.min(1,e.deltaY||e.wheelDelta)) || 0
         }
     },
