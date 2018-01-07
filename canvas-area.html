@@ -23,7 +23,7 @@
 <span id="coords">pos: ./.</span> <b>|</b> <span id="size">size: ./.</span> <b>|</b>
 <label><input type="checkbox" onchange="toggleCartesian();"> cartesian</label>
 
-<script src="https://gitcdn.xyz/cdn/goessner/canvas-area/master/canvas-area.js"></script>
+<script src="./canvas-area.js"></script>
 <script>
     const ctx = document.getElementById('c').getContext('2d'),
           ca = document.getElementById('ca'),
@@ -33,7 +33,7 @@
 
     function draw(ctx, view) {
         let w = ctx.canvas.width, h = ctx.canvas.height, 
-        sz = 20*view.scl, xoff = view.x%sz, yoff = view.y%sz;
+            sz = 20*view.scl, xoff = view.x%sz, yoff = view.y%sz;
 
         if (ca.cartesian)
             ctx.setTransform(1,0,0,-1,0.5,h-0.5);
@@ -56,10 +56,10 @@
             ctx.stroke();
         }
 
-        // draw rectangle ...
+        // draw rectangles ...
         ctx.save();
         if (ca.cartesian)
-            ctx.setTransform(view.scl,0,0,-view.scl,view.x+0.5,h-view.y+0.5);
+            ctx.setTransform(view.scl,0,0,-view.scl,view.x+0.5,h-view.y-0.5);
         else
             ctx.setTransform(view.scl,0,0,view.scl,view.x+0.5,view.y+0.5);
         ctx.strokeStyle = "#555";

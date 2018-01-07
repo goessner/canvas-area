@@ -36,7 +36,7 @@ canvasArea.prototype = {
         this.notify('view', this._view);
     },
     // viewport handling ...
-    pan: function({dx,dy}) { this._view.x+=dx; this._view.y+=this.cartesian?-dy:dy; this.notify('view', this._view); },
+    pan: function({dx,dy}) { this._view.x+=dx; this._view.y+=this.cartesian?dy:dy; this.notify('view', this._view); },
     zoom: function({x,y,scl}) {
         this._view.x = x + scl*(this._view.x - x)
         this._view.y = y + scl*(this._view.y - y)
