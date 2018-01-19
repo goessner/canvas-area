@@ -50,7 +50,7 @@ It allows *zoom*, *pan* and *resize* interactions.
 |`zoom({x,y,scl})`|`x`: x-center<br>`y`: y-center<br>`scl`: factor | `undefined`| zoom about point `{x,y}` by factor `scl`. Modifies  `view` property  |
 |`pntToUsr({x,y})`| point | point | transform argument point (device coordinates) to result point (user coordinates) with respect to `view` property  |
 |`notify(key,value)`|`key`:&nbsp;event&nbsp;type<br>`value`:&nbsp;event&nbsp;data |`undefined`| notify observers of event type `key` about event `value`|
-|`on(key,handler)`|`key`:&nbsp;event&nbsp;type<br>`handler`:&nbsp;event&nbsp;handler|`undefined`| register `handler` with event type `key`. |
+|`on(key,handler)`|`key`:&nbsp;event&nbsp;type<br>`handler`:&nbsp;event&nbsp;handler|`this`| register `handler` with event type `key`. |
 
 ... and events, which can be observed via `observe` method.
 
@@ -110,6 +110,7 @@ Use following link for `canvas-area.js`.
 * method `observe(key,handler)` marked as deprecated. Use `on(key,handler)` instead.
 * renamed event property `buttons` to `btn` in [`drag`,`pointer`,`buttondown`,`buttonup`,`pointerenter`,`pointerleave`] event.
 * necessary styles `display: block; overflow: hidden;` automatically added as inline style while constructing.
+* touch events experimentally implemented.
 
 ###  [0.4.0] on January 06, 2018
 * Initial release.
