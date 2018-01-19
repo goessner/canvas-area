@@ -50,7 +50,7 @@ It allows *zoom*, *pan* and *resize* interactions.
 |`zoom({x,y,scl})`|`x`: x-center<br>`y`: y-center<br>`scl`: factor | `undefined`| zoom about point `{x,y}` by factor `scl`. Modifies  `view` property  |
 |`pntToUsr({x,y})`| point | point | transform argument point (device coordinates) to result point (user coordinates) with respect to `view` property  |
 |`notify(key,value)`|`key`:&nbsp;event&nbsp;type<br>`value`:&nbsp;event&nbsp;data |`undefined`| notify observers of event type `key` about event `value`|
-|`observe(key,handler)`|`key`:&nbsp;event&nbsp;type<br>`handler`:&nbsp;event&nbsp;handler|`undefined`| let `handler` get invoked with event type `key`. |
+|`on(key,handler)`|`key`:&nbsp;event&nbsp;type<br>`handler`:&nbsp;event&nbsp;handler|`undefined`| register `handler` with event type `key`. |
 
 ... and events, which can be observed via `observe` method.
 
@@ -83,23 +83,36 @@ Use following link for `canvas-area.js`.
 
 
 ## FAQ
+* __Can we use multiple *canvases* with `canvas-area` ?__
+  * `canvas-area` is a container element for potentially multiple `canvas` elements.
+  * Multiple *canvases* are mostly used as layers stacked on top of each others in practice. Please note here:
+    * for every `canvas` element except the first one use `position:absolute;` style.
+    * stacking level can be made explicite using `z-index: 5;`  style.
+    * `canvas` elements are transparent by default. So avoid giving them individual background colors.
+    * `canvas-area` is managing the *resize*  of its `canvas` children, but not their - then necessary - `redraw`.
+    * `canvas-area` is managing the *view* parameters for *pan* and *zoom*, but does not apply those values to the `canvas` contexes. Do that by yourself while redrawing or by using the `on('view',...)` handler.
 
 * __Does not work properly with Mobile Device X and Touch Screen Y ?__
-  * Desktop browsers only are addressed at current.
-  * I'm unsure, if and when to add *touch* and *pen* events.
+  * Desktop browsers only are addressed primarily at current.
+  * Implementation of touch events is experimental (*pan* works with touch and *resize* also using a *pen* now).
+  * Issues with Microsoft Edge.
 
 * __Can you implement feature X and possibly feature Y ?__
   * `canvas-area` serves my personal needs very well as it is.
   * So ... no, I won't.
   * Please go ahead and implement it by yourself.
   * If you think, your enhancement is of common interest, you are very welcome, to send me a pull request.
-  
 
 ## Changelog
 
+###  [0.4.5] on January 19, 2018
+* chainable method `on(key,handler)` added.
+* method `observe(key,handler)` marked as deprecated. Use `on(key,handler)` instead.
+* renamed event property `buttons` to `btn` in [`drag`,`pointer`,`buttondown`,`buttonup`,`pointerenter`,`pointerleave`] event.
+* necessary styles `display: block; overflow: hidden;` automatically added as inline style while constructing.
+
 ###  [0.4.0] on January 06, 2018
 * Initial release.
-
 
 ## License
 

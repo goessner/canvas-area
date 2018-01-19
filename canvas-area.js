@@ -3,11 +3,15 @@
  * @license MIT License
  * @link https://github.com/goessner/canvas-area
  */
+"use strict";
 
 function canvasArea(elm) { return elm.constructor(); }
 canvasArea.prototype = {
     constructor: function() {
+        this.style.display = 'block';
+        this.style.overflow = 'hidden';
         this._view = {x:0,y:0,scl:1};
+        this.ptrloc = {x:0,y:0};
         this.registerEvents();
         this.handleEventPtr = this.handleEvent.bind(this);
         this.resize(this);   // align sizes of potential canvas children ...
@@ -27,23 +31,23 @@ canvasArea.prototype = {
     },
     get resizeActive() { return this._resizable && this.cursor.includes('resize'); },
     get cursor() { return this.style.cursor; },
-    set cursor(q) { return this.style.cursor = q; },
+    set cursor(q) { this.style.cursor = q; },
     get cartesian() { return !!eval(this.getAttribute('cartesian')); },
     set cartesian(q) { this.setAttribute('cartesian',q); },
     get view() { return this._view },
     set view(q) { 
         this._view.x = q.x || 0; this._view.y = q.y || 0; this._view.scl = q.scl || 1;
-        this.notify('view', this._view);
+        this.notify('view', Object.assign({type:'view'},this._view));
     },
     // viewport handling ...
-    pan: function({dx,dy}) { this._view.x+=dx; this._view.y+=dy; this.notify('view', this._view); },
+    pan: function({dx,dy}) { this._view.x+=dx; this._view.y+=dy; this.notify('view', Object.assign({type:'view'},this._view)); },
     zoom: function({x,y,scl}) {
-        this._view.x = x + scl*(this._view.x - x)
-        this._view.y = y + scl*(this._view.y - y)
-        this._view.scl *= scl
-        this.notify('view', this._view);
+        this._view.x = x + scl*(this._view.x - x);
+        this._view.y = y + scl*(this._view.y - y);
+        this._view.scl *= scl;
+        this.notify('view', Object.assign({type:'view'},this._view));  // MS Edge doesn't support 'spread operator' '...'
     },
-    pntToUsr: function({x,y}) { let vw = this._view; return {x:(x - vw.x)/vw.scl, y:(y - vw.y)/vw.scl} },
+    pntToUsr: function({x,y,btn,type}) { let vw = this._view; return {x:(x - vw.x)/vw.scl, y:(y - vw.y)/vw.scl, btn, type} },
 //    vecToUsr: function({x,y}) { let vw = this._view; return {x:(x - vw.x)/vw.scl, y:(y - vw.y)/vw.scl} },
     resize: function({width,height}) {
         this.width = width;
@@ -62,19 +66,24 @@ canvasArea.prototype = {
         this.addEventListener("mouseenter", this, false);
         this.addEventListener("mouseleave", this, false);
         this.addEventListener("wheel", this, false);
+        this.addEventListener("touchmove", this, false);
+        this.addEventListener("touchstart", this, false);
+        this.addEventListener("touchend", this, false);
     },
     handleEventPtr: null,
     handleEvent: function(e) {
+        if (canvasArea.defaultPreventers.includes(e.type))
+            e.preventDefault();
         if (e.type in this) 
             this[e.type](this.getEventData(e));
     },
     mousemove: function(e) {
-        if (e.buttons === 1) {  // left mouse button down ...
+        if (e.btn === 1) {  // left mouse button down ...
             if (this.resizeActive) {  // resize mode active ..
                 this.resize({width: this.width  + (this.cursor[1] === 'w' ? e.dx : 0), 
                              height: this.height + (this.cursor[0] === 'n' ? (this.cartesian ? -e.dy : e.dy) : 0)});
             }
-            else if (this.notify('drag',e))  // something dragged .. ?
+            else if (this.notify((e.type='drag'),e))  // something dragged .. ?
                 ;
             else
                 this.pan(e);
@@ -85,7 +94,7 @@ canvasArea.prototype = {
                 this.cursor = mode+'-resize';
             else {
                 if (this.cursor !== 'auto') this.cursor = 'auto';
-                this.notify('pointer',e);
+                this.notify((e.type='pointer'),e);
             }
         }
     },
@@ -95,7 +104,7 @@ canvasArea.prototype = {
             window.addEventListener('mousemove', this.handleEventPtr, false);
         }
         else
-            this.notify('buttondown',e);
+            this.notify((e.type='buttondown'),e);
     },
     mouseup: function(e) { 
         if (this.resizeActive) {
@@ -103,13 +112,22 @@ canvasArea.prototype = {
             this.addEventListener("mousemove", this, false);
         }
         else
-            this.notify('buttonup',e);
+            this.notify((e.type='buttonup'),e);
     },
-    mouseenter: function(e) { this.notify('pointerenter',e) },
-    mouseleave: function(e) {  this.notify('pointerleave',e) },
+    mouseenter: function(e) { this.notify((e.type='pointerenter'),e) },
+    mouseleave: function(e) { this.notify((e.type='pointerleave'),e) },
 
     wheel: function(e) { this.zoom({x:e.x,y:e.y,scl:e.delta>0?9/10:10/9}) },
-
+    touchstart: function(e) { this.mousedown(e); },
+    touchend: function(e) { this.mouseup(e); },
+    touchmove: function(e) {
+        if (this.resizeActive) {  // resize mode active ..
+            this.resize({width: this.width  + (this.cursor[1] === 'w' ? e.dx : 0), 
+                         height: this.height + (this.cursor[0] === 'n' ? (this.cartesian ? -e.dy : e.dy) : 0)});
+        }
+        else
+            this.pan(e);
+    },
     resizeMode: function({x,y}) {
         let mode = this.resizable, w = mode && this.width, h = mode && this.height, cartesian = this.cartesian;
         return mode && ( mode > 2 && x > w - 3 && (cartesian && y < 3 || !cartesian && y > h - 3) ? 'nwse'
@@ -119,18 +137,27 @@ canvasArea.prototype = {
     },
     getEventData: function(e) {  // inconsistent middle button value with 'mouseup' !!
         let bbox = e.target.getBoundingClientRect && e.target.getBoundingClientRect() || {left:0, top:0},
-            x = e.clientX - Math.floor(bbox.left),
-            y = e.clientY - Math.floor(bbox.top);
+            touch = e.changedTouches && e.changedTouches[0],
+            x = (touch && touch.clientX || e.clientX) - Math.floor(bbox.left),
+            y = (touch && touch.clientY || e.clientY) - Math.floor(bbox.top),
+            dx = touch ? x - this.ptrloc.x : e.movementX,
+            dy = touch ? y - this.ptrloc.y : e.movementY;
+            
+        this.ptrloc.x = x;
+        this.ptrloc.y = y;
+
         return {
-            buttons: (e.buttons !== undefined && e.type !== 'mouseup' ? e.buttons : (e.button || e.which)),
+            type: e.type,
+            btn: (e.buttons !== undefined && e.type !== 'mouseup' ? e.buttons : (e.button || e.which)),
             x: x,
             y: this.cartesian ? this.height - y : y,
-            dx: e.movementX,
-            dy: this.cartesian ? -e.movementY : e.movementY,
+            dx: dx,
+            dy: this.cartesian ? -dy : dy,
+            scl: this._view.scl,
             delta: Math.max(-1,Math.min(1,e.deltaY||e.wheelDelta)) || 0
         }
     },
-    // observer management ...
+    // observer management ... todo: decouple from canvas-erea
     signals: {},
     notify: function(key,val) {
         let res = false;
@@ -139,9 +166,14 @@ canvasArea.prototype = {
                 res = res || hdl(val);
         return res;
     },
+    // deprecated .. use 'on(..)' instead ...
     observe: function(key,handler) {
         (this.signals[key] || (this.signals[key]=[])).push(handler);
         return handler;
+    },
+    on: function(key,handler) {
+        (this.signals[key] || (this.signals[key]=[])).push(handler);
+        return this;
     },
     remove: function(key,handler) {
         let idx = this.signals[key] ? this.signals[key].indexOf(handler) : -1;
@@ -150,6 +182,7 @@ canvasArea.prototype = {
     }
 }
 
+canvasArea.defaultPreventers = ['touchstart','touchend','touchmove'];
 canvasArea.register = function() {
     const register = () => {
         Object.setPrototypeOf(canvasArea.prototype, HTMLElement.prototype);
