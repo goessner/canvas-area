@@ -24,10 +24,31 @@ It allows *zoom*, *pan* and *resize* interactions.
 * `resizable`: one of [`'none'`, `'horizontal'`, `'vertical'`, `'both'`].
 * `cartesian`: `true` or `false`
 
-
 ## Example please ...
 
 [try it out ...](https://goessner.github.io/canvas-area/canvas-area)
+
+## Multiple Canvases
+
+Multiple canvases are mostly used as layers in practice. It is up to you, how you organize, what to draw on which layer. Often there is a *background* layer holding static graphics, which does not need to be updated frequently. In contrast to that there might be a *dynamic* layer holding animated graphics for instance. There also might be an *interactivity* layer, containing editable geometry.
+
+Separating low frequently updated geometry from high frequently updated geometry by different layers should result in a performance gain.
+
+Please note, when using multiple canvases - and stacking them on top of each other:
+
+* For every canvas element, perhaps except the first one, use `position:absolute;` style.
+* Stacking level can be made explicite using `z-index: 5;`  style.
+* `canvas` elements are transparent by default. So avoid giving them background colors.
+* `canvas-area` is managing the *resize*  of its `canvas` children, but not their `redraw`.
+*  `canvas-area` is managing the *view* parameters for *pan* and *zoom*, but does not apply those values to the `canvas` contexes. Do that by yourself while redrawing or using the `on('view',...)` handler.
+
+Example:
+```html
+<canvas-area id="ca" width="401" height="301">
+    <canvas id="c1" style="position:absolute; z-index:1;"></canvas>
+    <canvas id="c2" style="position:absolute; z-index:2;"></canvas>
+</canvas-area>
+```
 
 ## Show me the scripting API ...
 
@@ -83,14 +104,6 @@ Use following link for `canvas-area.js`.
 
 
 ## FAQ
-* __Can we use multiple *canvases* with `canvas-area` ?__
-  * `canvas-area` is a container element for potentially multiple `canvas` elements.
-  * Multiple *canvases* are mostly used as layers stacked on top of each others in practice. Please note here:
-    * for every `canvas` element except the first one use `position:absolute;` style.
-    * stacking level can be made explicite using `z-index: 5;`  style.
-    * `canvas` elements are transparent by default. So avoid giving them individual background colors.
-    * `canvas-area` is managing the *resize*  of its `canvas` children, but not their - then necessary - `redraw`.
-    * `canvas-area` is managing the *view* parameters for *pan* and *zoom*, but does not apply those values to the `canvas` contexes. Do that by yourself while redrawing or by using the `on('view',...)` handler.
 
 * __Does not work properly with Mobile Device X and Touch Screen Y ?__
   * Desktop browsers only are addressed primarily at current.
