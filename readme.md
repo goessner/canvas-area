@@ -62,6 +62,7 @@ Example:
 |`cursor`|String| simple interface to CSS cursor attribute. | `'auto'` |
 |`view`|`{x,y,scl}`| origin location `x,y` in `px` and scaling factor `scl` | `{0,0,1}` |
 |`cartesian`|Boolean| `true`: `y`-axis pointing up, <br>`false`: `y`-axis pointing down  | `false` |
+|`observable`|Object| initially (lazily) set external observable object once.  | - |
 
 ... methods ...
 
@@ -117,6 +118,9 @@ Use following link for `canvas-area.js`.
   * If you think, your enhancement is of common interest, you are very welcome, to send me a pull request.
 
 ## Changelog
+
+###  [0.4.7] on January 28, 2018
+* `observable` setter (only) for possibly injecting an external observable object. So enable delegating observer management to 'app' object.
 
 ###  [0.4.5] on January 19, 2018
 * chainable method `on(key,handler)` added.

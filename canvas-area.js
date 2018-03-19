@@ -7,11 +7,13 @@
 
 function canvasArea(elm) { return elm.constructor(); }
 canvasArea.prototype = {
-    constructor: function() {
+    constructor() {
         this.style.display = 'block';
         this.style.overflow = 'hidden';
         this._view = {x:0,y:0,scl:1};
         this.ptrloc = {x:0,y:0};
+        this.lastevt = {x:0,y:0,btn:0,dbtn:0};
+        this.signals = {};
         this.registerEvents();
         this.handleEventPtr = this.handleEvent.bind(this);
         this.resize(this);   // align sizes of potential canvas children ...
@@ -45,9 +47,9 @@ canvasArea.prototype = {
         this._view.x = x + scl*(this._view.x - x);
         this._view.y = y + scl*(this._view.y - y);
         this._view.scl *= scl;
-        this.notify('view', Object.assign({type:'view'},this._view));  // MS Edge doesn't support 'spread operator' '...'
+        this.notify('view', Object.assign({type:'view'},this._view));  // MS Edge doesn't support 'spread operator' at current
     },
-    pntToUsr: function({x,y,btn,type}) { let vw = this._view; return {x:(x - vw.x)/vw.scl, y:(y - vw.y)/vw.scl, btn, type} },
+    pntToUsr: function(p) { let vw = this._view; p.x = (p.x - vw.x)/vw.scl; p.y = (p.y - vw.y)/vw.scl; return p; },
 //    vecToUsr: function({x,y}) { let vw = this._view; return {x:(x - vw.x)/vw.scl, y:(y - vw.y)/vw.scl} },
     resize: function({width,height}) {
         this.width = width;
@@ -83,8 +85,8 @@ canvasArea.prototype = {
                 this.resize({width: this.width  + (this.cursor[1] === 'w' ? e.dx : 0), 
                              height: this.height + (this.cursor[0] === 'n' ? (this.cartesian ? -e.dy : e.dy) : 0)});
             }
-            else if (this.notify((e.type='drag'),e))  // something dragged .. ?
-                ;
+//            else if (this.notify((e.type='drag'),e))  // something dragged .. ?
+//                ;
             else
                 this.pan(e);
         }
@@ -98,7 +100,7 @@ canvasArea.prototype = {
             }
         }
     },
-    mousedown: function(e) { 
+    mousedown: function(e) {
         if (this.resizeActive) {
             this.removeEventListener("mousemove", this, false);
             window.addEventListener('mousemove', this.handleEventPtr, false);
@@ -111,11 +113,17 @@ canvasArea.prototype = {
             window.removeEventListener('mousemove', this.handleEventPtr, false);
             this.addEventListener("mousemove", this, false);
         }
+//        else if (e.dbtn !== 0 && e.dx === 0 && e.dy === 0)  // (same) button down and up over same location
+//            this.notify((e.type='click'),e);
         else
             this.notify((e.type='buttonup'),e);
     },
-    mouseenter: function(e) { this.notify((e.type='pointerenter'),e) },
-    mouseleave: function(e) { this.notify((e.type='pointerleave'),e) },
+    mouseenter: function(e) { 
+        this.notify((e.type='pointerenter'),e) 
+    },
+    mouseleave: function(e) { 
+        this.notify((e.type='pointerleave'),e) 
+    },
 
     wheel: function(e) { this.zoom({x:e.x,y:e.y,scl:e.delta>0?9/10:10/9}) },
     touchstart: function(e) { this.mousedown(e); },
@@ -135,20 +143,24 @@ canvasArea.prototype = {
                        : mode > 1 && (cartesian && y < 3 || !cartesian && y > h - 3) ? 'ns'
                        : false);
     },
-    getEventData: function(e) {  // inconsistent middle button value with 'mouseup' !!
+    getEventData: function(e) {
         let bbox = e.target.getBoundingClientRect && e.target.getBoundingClientRect() || {left:0, top:0},
             touch = e.changedTouches && e.changedTouches[0],
             x = (touch && touch.clientX || e.clientX) - Math.floor(bbox.left),
             y = (touch && touch.clientY || e.clientY) - Math.floor(bbox.top),
-            dx = touch ? x - this.ptrloc.x : e.movementX,
-            dy = touch ? y - this.ptrloc.y : e.movementY;
-            
-        this.ptrloc.x = x;
-        this.ptrloc.y = y;
+            dx = e.type === 'mousemove' ? e.movementX : x - this.lastevt.x,   // see Bugzilla, Bug 764498
+            dy = e.type === 'mousemove' ? e.movementY : y - this.lastevt.y,
+            btn = e.buttons !== undefined ? e.buttons : e.button || e.which,
+            dbtn = btn - this.lastevt.btn;  // simple button index difference ... !
+
+        this.lastevt.x = x;   // memoize for touch events 
+        this.lastevt.y = y;
+        this.lastevt.btn = btn;
 
         return {
             type: e.type,
-            btn: (e.buttons !== undefined && e.type !== 'mouseup' ? e.buttons : (e.button || e.which)),
+            btn: btn,
+            dbtn: dbtn,
             x: x,
             y: this.cartesian ? this.height - y : y,
             dx: dx,
@@ -157,29 +169,29 @@ canvasArea.prototype = {
             delta: Math.max(-1,Math.min(1,e.deltaY||e.wheelDelta)) || 0
         }
     },
-    // observer management ... todo: decouple from canvas-erea
-    signals: {},
-    notify: function(key,val) {
-        let res = false;
-        if (this.signals[key]) 
-            for (let hdl of this.signals[key]) 
-                res = res || hdl(val);
-        return res;
+    get observable() { 
+        return this._observable 
+            || (this._observable = {
+                    notify(key,val) {
+                        let res = false;
+                        if (this.signals[key]) 
+                            for (let hdl of this.signals[key]) 
+                                res = res || hdl(val);
+                        return res;
+                    },
+                    on(key,handler) {
+                        (this.signals[key] || (this.signals[key]=[])).push(handler);
+                        return this;
+                    },
+                    remove: function(key,handler) {
+                        let idx = this.signals[key] ? this.signals[key].indexOf(handler) : -1;
+                        if (idx >= 0)
+                           this.signals[key].splice(idx,1);
+                    }
+                });
     },
-    // deprecated .. use 'on(..)' instead ...
-    observe: function(key,handler) {
-        (this.signals[key] || (this.signals[key]=[])).push(handler);
-        return handler;
-    },
-    on: function(key,handler) {
-        (this.signals[key] || (this.signals[key]=[])).push(handler);
-        return this;
-    },
-    remove: function(key,handler) {
-        let idx = this.signals[key] ? this.signals[key].indexOf(handler) : -1;
-        if (idx >= 0)
-           this.signals[key].splice(idx,1);
-    }
+    // lazy implement observable interface for referencing external observable (app).
+    set observable(o) { if (this._observable) console.error('this.observable already exists.'); this._observable = o; }
 }
 
 canvasArea.defaultPreventers = ['touchstart','touchend','touchmove'];
