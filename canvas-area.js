@@ -169,29 +169,22 @@ canvasArea.prototype = {
             delta: Math.max(-1,Math.min(1,e.deltaY||e.wheelDelta)) || 0
         }
     },
-    get observable() { 
-        return this._observable 
-            || (this._observable = {
-                    notify(key,val) {
-                        let res = false;
-                        if (this.signals[key]) 
-                            for (let hdl of this.signals[key]) 
-                                res = res || hdl(val);
-                        return res;
-                    },
-                    on(key,handler) {
-                        (this.signals[key] || (this.signals[key]=[])).push(handler);
-                        return this;
-                    },
-                    remove: function(key,handler) {
-                        let idx = this.signals[key] ? this.signals[key].indexOf(handler) : -1;
-                        if (idx >= 0)
-                           this.signals[key].splice(idx,1);
-                    }
-                });
+    notify(key,val) {
+        let res = false;
+        if (this.signals[key]) 
+            for (let hdl of this.signals[key]) 
+                res = res || hdl(val);
+        return res;
     },
-    // lazy implement observable interface for referencing external observable (app).
-    set observable(o) { if (this._observable) console.error('this.observable already exists.'); this._observable = o; }
+    on(key,handler) {
+        (this.signals[key] || (this.signals[key]=[])).push(handler);
+        return this;
+    },
+    remove: function(key,handler) {
+        let idx = this.signals[key] ? this.signals[key].indexOf(handler) : -1;
+        if (idx >= 0)
+           this.signals[key].splice(idx,1);
+    }
 }
 
 canvasArea.defaultPreventers = ['touchstart','touchend','touchmove'];
